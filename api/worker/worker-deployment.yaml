@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels: 
+    app: taskQueue
+    component: machinery-worker
+  name: machinery-worker-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: taskQueue
+        component: machinery-worker
+    spec:
+      containers:
+      - name: machinery-worker
+        image: machinery_worker:v1
+        imagePullPolicy: IfNotPresent
