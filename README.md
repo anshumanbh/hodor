@@ -154,3 +154,5 @@ You would also want to make sure that you are connected to your Google Cloud acc
 * This framework is actively being worked on using different offerings of the Google Cloud such as Google Pub/Sub and Google BigQuery for some Data Analytics on the results of the tools. I will try to open source those parts as well.
 
 * If its a tool like nmap where you have to specify the name of the output file, you would have to modify some code because you would want different filenames for each time nmap is run. Check out the nmap example for this. 
+
+* Lastly, this framework was build based on my other framework FASTSAM - https://github.com/anshumanbh/FASTSAM. The problem with FASTSAM was that there wasn't real scaling. I was only deploying one API server, one RabbitMQ broker, running tool as docker containers on one host node. Kubernetes makes much more sense now. This is the real hyperscale.  
