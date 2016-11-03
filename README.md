@@ -5,6 +5,15 @@ Scaleable DevSecOps Testing Framework built on Kubernetes
 
 
 
+### UseCase / Motivation
+The usecase is pretty simple:
+> We want to send an API request to our load balanced and clustered API server (as Kubernetes Pods) in an asynchronous manner and get a UUID in return. 
+> The API server would then drop that request in a distributed message processing queue (RabbitMQ broker as a Kubernetes Pod). 
+> The message or the task would then be picked up by workers (as Kubernetes Pod) to be processed.
+> Each worker Pod would start a task (as Kubernetes Job Pods), complete the task and store the results on the host.  
+
+
+
 ## Getting Started
 ### Local Deployment using Minikube
 * Install docker-machine (https://docs.docker.com/machine/install-machine/) and kubectl (http://kubernetes.io/docs/user-guide/prereqs/).
@@ -82,6 +91,21 @@ Scaleable DevSecOps Testing Framework built on Kubernetes
 
 
 
+### UseCase Example
+I have uploaded a Youtube video showing this in action here - https://youtu.be/W7eH7iRtq8U
+
+So, assuming you have completed the steps described above, you already have the cluster up and running:
+All you would need to do is send a curl request that looks like below:
+`curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"tools_nmap","Targets":["IP1", "IP2", "IP3"],"Options":"-Pn -p 1-1000"}' http://<minikube docker-env IP>:<Internal port of hodor-api-service>/api/v1/runtool`
+This would submit 3 jobs (because 3 targets) in the RabbitMQ broker which is then picked up by available Machinery workers.
+The workers proceed to start the Docker container from the `tools_nmap` Docker image and run it against the target IP.  
+After the scan finishes, the results are saved on the host's $pwd/results directory which would be the `/api/results` directory inside `minikube`.
+Once the results are stored, the jobs and pods related to the jobs are deleted from the Kubernetes cluster.
+
+Remember, the number of PODS supporting the API server, RabbitMQ broker and Machinery Worker can all be increased/decreased on the fly without any downtime using Kubernetes. 
+
+
+
 ### Local Development using out-of-cluster config of Kubernetes 
 Building Docker images every time some code is changed and applying the newly built Docker images to the Kubernetes cluster can be quite frustrating when you are actually developing something in the framework.
 To make this easier, development is recommended using `out-of-cluster` configuration of Kubernetes. Once you are confident everything works the way its supposed to be, you can deploy it `in-cluster`.
@@ -100,24 +124,6 @@ And, uncomment:
 * Finally, in another terminal, start the API server by navigating to the `hodor/api` directory and typing `go run *.go`
 * You are now ready to send API requests like: `curl -X POST http://localhost:3636/api/v1/testtask` or `curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"tools_nmap","Targets":["IP1", "IP2", "IP3"],"Options":"-Pn -p 1-1000"}' http://localhost:3636/api/v1/runtool`
 * The results would be saved under the `hodor/api/worker/results` directory.
-
-
-
-### Example UseCase
-I have uploaded a Youtube video showing this in action here - https://youtu.be/W7eH7iRtq8U
-
-The usecase is pretty simple:
-> We want to send an API request to our load balanced and clustered API server to start NMAP scan against a bunch of targets. 
-
-So, assuming you have completed the steps described above, you already have the cluster up and running:
-All you would need to do is send a curl request that looks like below:
-`curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"tools_nmap","Targets":["IP1", "IP2", "IP3"],"Options":"-Pn -p 1-1000"}' http://<minikube docker-env IP>:<Internal port of hodor-api-service>/api/v1/runtool`
-This would submit 3 jobs (because 3 targets) in the RabbitMQ broker which is then picked up by available Machinery workers.
-The workers proceed to start the Docker container from the `tools_nmap` Docker image and run it against the target IP.  
-After the scan finishes, the results are saved on the host's $pwd/results directory which would be the `/api/results` directory inside `minikube`.
-Once the results are stored, the jobs and pods related to the jobs are deleted from the Kubernetes cluster.
-
-Remember, the number of PODS supporting the API server, RabbitMQ broker and Machinery Worker can all be increased/decreased on the fly without any downtime using Kubernetes. 
 
 
 
