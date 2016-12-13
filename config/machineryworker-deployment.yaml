@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels: 
+    app: taskQueue
+    component: machinery-worker
+  name: machinery-worker-deployment
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: taskQueue
+        component: machinery-worker
+    spec:
+      containers:
+      - name: machinery-worker
+        image: machinery_worker:v1
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: "results"
+          mountPath: /api/results
+        - name: "secretstore"
+          readOnly: true
+          mountPath: /secretstore
+        env:
+        - name: PROJECT_ID
+          value: "security-testing-146320"
+        - name: PUBSUB_TOPICNAME
+          value: "new_scans"
+        - name: BUCKET_NAME
+          value: "nmap-scans"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/secretstore/creds.json"
+      volumes:
+      - name: "results"
+        hostPath: 
+          path: "/api/results"
+      - name: "secretstore"
+        secret:
+          secretName: "googlesecret"

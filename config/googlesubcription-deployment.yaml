@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels: 
+    app: googlePubSub
+    component: google-subscription
+  name: google-subscription-deployment
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: googlePubSub
+        component: google-subscription
+    spec:
+      containers:
+      - name: google-subscription
+        image: google_subscription:v1
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: "secretstore"
+          readOnly: true
+          mountPath: /secretstore
+        env:
+        - name: PROJECT_ID
+          value: "security-testing-146320"
+        - name: SUBSCRIPTION_NAME
+          value: "receive_scan_results"
+        - name: DATASET_NAME
+          value: "nmapds"
+        - name: TABLE_NAME
+          value: "scans"
+        - name: BUCKET_NAME
+          value: "nmap-scans"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/secretstore/creds.json"
+      volumes:
+      - name: "secretstore"
+        secret:
+          secretName: "googlesecret"
+      

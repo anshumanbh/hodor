@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: taskQueue
+    component: rabbitmq
+  name: rabbitmq-service
+spec:
+  ports:
+  - port: 5672
+  selector:
+    app: taskQueue
+    component: rabbitmq
+#   type: LoadBalancer --> commented since only need 1 POD for the rabbit mq message broker
