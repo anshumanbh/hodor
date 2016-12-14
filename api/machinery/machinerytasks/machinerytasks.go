@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
 	jobv1 "k8s.io/client-go/pkg/apis/batch/v1"
+	meta_v1 "k8s.io/client-go/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 
 	"strconv"
@@ -142,7 +143,8 @@ func RunTool(toolname string, targets string, options string) (string, error) {
 	fmt.Println("")
 
 	for {
-		cjob, err := clientset.Batch().Jobs(api.NamespaceDefault).Get(runtooljob.Name)
+
+		cjob, err := clientset.Batch().Jobs(api.NamespaceDefault).Get(runtooljob.Name, meta_v1.GetOptions{})
 		check(err)
 
 		cjobstatus := cjob.Status.Succeeded
@@ -155,7 +157,7 @@ func RunTool(toolname string, targets string, options string) (string, error) {
 		time.Sleep(10 * time.Second)
 	}
 
-	fjob, err := clientset.Batch().Jobs(api.NamespaceDefault).Get(runtooljob.Name)
+	fjob, err := clientset.Batch().Jobs(api.NamespaceDefault).Get(runtooljob.Name, meta_v1.GetOptions{})
 	check(err)
 
 	cpods, err := clientset.Core().Pods(api.NamespaceDefault).List(v1.ListOptions{})
