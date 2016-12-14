@@ -13,7 +13,13 @@ Framework for Automated DevSecOps Testing that is Scaleable and Asynchronous bui
 
 * Grab your Google Service Account credentials file and save it as `creds.json`. If you don't already have this file, you will need to create a service account credential (for Google App Engine) by navigating to https://console.developers.google.com/apis/credentials?project=<project-id>. Once you do that, save the .json file as creds.json.
 
-* Install Minikube following the instructions here - http://kubernetes.io/docs/getting-started-guides/minikube/. For MacOS, it was the command `curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.12.0/minikube-darwin-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/`
+* Install Minikube following the instructions here - http://kubernetes.io/docs/getting-started-guides/minikube/. Also, check https://github.com/kubernetes/minikube/releases for installation instructions. 
+
+* The versions I have tested this with are:
+    * docker-machine version 0.8.2, build e18a919
+    * kubectl Client Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.6", GitCommit:"e569a27d02001e343cb68086bc06d47804f62af6", GitTreeState:"clean", BuildDate:"2016-11-12T05:22:15Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"darwin/amd64"}
+    * kubectl Server Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.3", GitCommit:"4957b090e9a4f6a68b4a40375408fdc74a212260", GitTreeState:"clean", BuildDate:"1970-01-01T00:00:00Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"linux/amd64"}
+    * minikube version: v0.13.1
 
 * Type `minikube start` to start a single node Kubernetes cluster on your local machine
 
