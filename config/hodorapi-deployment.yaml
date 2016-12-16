@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: hodor-api
-        image: hodor_api:v1
+        image: abhartiya/hodor_api:v1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3636

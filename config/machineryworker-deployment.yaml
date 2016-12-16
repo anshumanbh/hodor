@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: machinery-worker
-        image: machinery_worker:v1
+        image: abhartiya/machinery_worker:v1
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: "results"

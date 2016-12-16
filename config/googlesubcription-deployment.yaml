@@ -6,7 +6,7 @@ metadata:
     component: google-subscription
   name: google-subscription-deployment
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: google-subscription
-        image: google_subscription:v1
+        image: abhartiya/google_subscription:v1
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: "secretstore"

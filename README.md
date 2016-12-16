@@ -1,132 +1,58 @@
 # hodor
-Framework for Automated DevSecOps Testing that is Scaleable and Asynchronous built on Kubernetes
+ A testing framework that is Scaleable and Asynchronous built on Kubernetes
+
+## Features
+
+* Built on Kubernetes with microservices pre-built as Docker images - no need to worry about OS, environments, languages, etc. 
+* Cluster Management of Docker containers handled by Kubernetes - no need worry about scaling, load balancing, rolling updates, fault tolerance, etc. 
+* RESTFUL API to request tools to run - anybody can request a tool to run by hitting an API endpoint
+* Asynchronous processing of jobs (running tools) - no need to wait for the results to come back. get a UUID on submitting a job and retrieve the status of the job later using that UUID. Uses [machinery](https://github.com/RichardKnop/machinery) and Google PubSub for achieving this in two different places. Aim is to consolidate and just use 1 (most probably Google PubSub in the future).
+* Extensible - ability to add more tools in the framework
+* Aggregate output from multiple tools and ability to query them by leveraging Google Web Services such as Google Storage Cloud and Google BigQuery - make sense of the output from all the tools by doing analytics, machine learning, etc. 
+
+## Pre-requisites
+
+* [Docker Toolbox](https://www.docker.com/products/docker-toolbox)
+* [Kubectl](http://kubernetes.io/docs/user-guide/prereqs/)
+* [Google ServiceAccount](https://cloud.google.com/compute/docs/access/service-accounts)
+* [Minikube](http://kubernetes.io/docs/getting-started-guides/minikube/)
+* In your Google Account, you will need:
+    * the Project ID
+    * to enable Google PubSub and create a topic and subscription for that topic. Grab the topic and subscription names.
+    * to enable Google Storage Cloud and create a bucket to store the results. Grab the bucket name.
+    * to enable Google BigQuery and create a Dataset. Grab the dataset name. 
+    * grab your Google Service Account credentials file and save it as `creds.json`. If you don't already have this file, you will need to create a service account credential (for Google App Engine) by navigating to https://console.developers.google.com/apis/credentials?project=<project-id>. Once you do that, save the .json file as creds.json somewhere on your local filesystem.
+
+## Usage
+
+Sending an API request (to the api/v1/runtool endpoint) via a CURL command to run a tool with multiple targets and options:
+
+    curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"<TOOLNAME>","Targets":["<IP1>", "<IP2>"],"Options":"<OPTIONS>"}' http://IP:PORT/api/v1/runtool
+
+## Workflow
+
+What the above command does is:
+* API request sent to the server.
+* Depending upon the number of targets (IPs above), jobs are created per target and are dropped in a queue. 
+* The jobs are picked up from the queue by multiple workers .
+* The workers start the tool (Whatever tool is mentioned in the curl request above) against each target in separate Docker containers. This is possible because tools are built as Docker images.
+* Results of the tool get uploaded to Google Storage Cloud (GSC).
+* The results filename is dropped in a topic on Google PubSub.
+* Subscription workers pick up the filename from the Google PubSub topic they are subscribed to.
+* The subscription worker grabs that results file from GSC and uploads the data in Google BigQuery for further analysis, learning, etc. 
+
+## Architecture
 
 ![hodor](imgs/hodorarch.jpeg)
 
-## Getting Started
+Hodor uses the following public Docker images:
+* [abhartiya/hodor_api:v1](https://hub.docker.com/r/abhartiya/hodor_api/)
+* [abhartiya/machinery_worker:v1](https://hub.docker.com/r/abhartiya/machinery_worker/)
+* [abhartiya/google_subscription:v1](https://hub.docker.com/r/abhartiya/google_subscription/)
+* [abhartiya/tools_nmap](https://hub.docker.com/r/abhartiya/tools_nmap/)
+* [rabbitmq](https://hub.docker.com/_/rabbitmq/)
 
-### Local Deployment using Minikube (single node Kubernetes cluster) with in-cluster config
+## Documentation
 
-* Install docker-machine and kubectl
-
-* git clone this repo
-
-* Grab your Google Service Account credentials file and save it as `creds.json`. If you don't already have this file, you will need to create a service account credential (for Google App Engine) by navigating to https://console.developers.google.com/apis/credentials?project=<project-id>. Once you do that, save the .json file as creds.json.
-
-* Install Minikube following the instructions here - http://kubernetes.io/docs/getting-started-guides/minikube/. Also, check https://github.com/kubernetes/minikube/releases for installation instructions. 
-
-* The versions I have tested this with are:
-    * docker-machine version 0.8.2, build e18a919
-    * kubectl Client Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.6", GitCommit:"e569a27d02001e343cb68086bc06d47804f62af6", GitTreeState:"clean", BuildDate:"2016-11-12T05:22:15Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"darwin/amd64"}
-    * kubectl Server Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.3", GitCommit:"4957b090e9a4f6a68b4a40375408fdc74a212260", GitTreeState:"clean", BuildDate:"1970-01-01T00:00:00Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"linux/amd64"}
-    * minikube version: v0.13.1
-
-* Type `minikube start` to start a single node Kubernetes cluster on your local machine
-
-* Type `minikube dashboard` to start the Kubernetes dashboard in your browser
-
-* Type `eval $(minikube docker-env)` to setup your docker config to point to minikube's docker environment
-
-* Now, you can do a `docker ps -a` or `docker images` to see all the Docker containers/images of your Minikube Kubernetes cluster for troubleshooting, etc. You can always do a `docker-machine ls` and then `docker-machine env <machinename>` and then `eval` it to switch back to other docker machines, if needed.
-
-* You can also run commands like `kubectl get nodes` or `kubectl get pods` to get started with running kubectl commands on your local Kubernetes cluster. If you want to switch `kubectl` to query a different Kubernetes cluster, you can do that by listing all the contexts by `kubectl config view` and then typing `kubectl config use-context <context-name>`
-
-* Next, we need to build the following docker images for the different Pods that we would be starting on Kubernetes:
-    * "docker build -t tools_nmap ." from the hodor/tools/nmap directory
-    * "docker build -t hodor_api:v1 ." from the hodor/api directory
-    * "docker build -t machinery_worker:v1 ." from the hodor/api/machinery directory
-    * "docker build -t google_subscription:v1 ." from the hodor/api/googlesubscription directory
-
-* We will be using a public RabbitMQ image so just type `docker pull rabbitmq` to make sure you have that image as well. By this point, we have built all the Docker images we need to deploy our minikube cluster.
-
-* If you look at the `.yaml` files in the `hodor/config` directory, you will notice that I am using some environment variables for `PROJECT_ID`, `PUBSUB_TOPICNAME`, `BUCKET_NAME`, `SUBSCRIPTION_NAME`, `DATASET_NAME`, `TABLE_NAME` and `GOOGLE_APPLICATION_CREDENTIALS` in some of those files.
-
-* Replace these values with the values corresponding to your Google Service Account. You will need your project ID on GCP, the topic and subscription name for Google PubSub, your GSC bucket name, your BigQuery dataset and table name.
-
-* Leave the `GOOGLE_APPLICATION_CREDENTIALS` environment variable as is.
-
-* Create a Kubernetes secret from your Google service account credentials file like this:
-`kubectl create secret generic googlesecret --from-file=/path/to/creds.json`
-
-* Make sure you can see it by typing `kubectl get secret googlesecret -o yaml`
-
-* At this point, you should be set to start your deployments in the Kubernetes cluster.
-
-* There are 6 yaml files right now in the `hodor/config` directory:
-    * googlesubscription-deployment.yaml (deploys 2 replicas for the Google Subscription worker)
-    * hodor/api/hodorapi-deployment.yaml (deploys 2 replicas for the API server running on port 3636)
-    * hodor/api/hodorapi-service.yaml (exposes and load balances the API server)
-    * hodor/api/worker/machineryworker-deployment.yaml (deploys 3 replicas for the machinery workers that consumes the message from the rabbitmq broker)
-    * hodor/rabbitmq/rabbitmq-deployment.yaml (deploys 1 replica for the rabbitmq broker running on port 5672)
-    * hodor/rabbitmq/rabbitmq-service.yaml (exposes the rabbitmq broker to the API servers as rabbitmq-service to talk to and submit jobs/tasks)
-
-* Navigate to the `hodor` directory and run `kubectl create -f config/ --recursive`.
-
-* Once you do this, your cluster should be up and running. 
-
-* You can also navigate to the `minikube dashboard` to see all the Pods deployed there.
-
-* Next, find out the IP of your Minikube docker-env by typing `minikube docker-env` and capturing the IP under `DOCKER_HOST`.
-
-* Next, find the port the API service is exposed to by navigating to `Services` in the minikube dashboard. It should be the one under port 80. Minikube doesn't loadbalance properly since its running locally and not remotely. So, the port `80` that we really want to expose wouldn't work. The other port works though so use that port below. 
-
-* Finally, send a curl request to the API service such as `curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"<TOOLNAME>","Targets":["<IP1>", "<IP2>"],"Options":"<OPTIONS>"}' http://IP:PORT/api/v1/runtool`. You should receive 2 Task IDs in the response. Navigate to the worker pods and look at their logs. Notice that the workers picked up the tasks and completed it. They then sent the filename fo Google PubSub and stored the scan result file (after converting to CSV) to Google Storage Cloud. 
-
-* The Subscription worker consumed the filename and ran another job taking the CSV data from Google Storage Cloud and uploading it to Google BigQuery. That's it!
-
-
-### Local Development with out-cluster config 
-
-You will notice that it is not feasible to build the entire minikube cluster locally every time you do a small change in the codebase. That would involve deleting all deployments, pods, jobs, services, rebuilding all Docker images, redeploying them, etc.
-In order to prevent all that work, we can actually develop locally by testing and making sure everything runs fine and its okay to deploy it in a cluster.
-In order to do that, we need to develop with an out-cluster config. For that, we need to make the following changes:
-
-    * In hodor/api/machinery/machinerytasks/machinerytasks.go file, comment the first 2 lines of the Runtool function and uncomment out the next 2 lines. This basically changes the in-cluster config to out-cluster config for Kubernetes. Notice that instead of letting Minikube use its config, we are now specifying a config file to manage the pods out of cluster. 
-   
-    * In hodor/api/machinery/machineryworker.go file, search for "rabbitmq-service" and replace all occurrences by "localhost". We do this because we will be starting the RabbitMQ service on the localhost out of cluster for the ease of testing.
-    
-    * In hodor/api/hodorapihandlers.go file, do the same - Search for "rabbitmq-service" and replace all occurrences by "localhost" for similar reasons as stated above.
-    
-    * Do whatever change you want in the codebase. No need to build the Docker images. You can start 1 instance of all the services individually as mentioned below:
-    
-    * In one terminal, start the rabbitmq service by typing "rabbitmq-server". This will start the RabbitMQ service.
-    
-    * In another terminal, navigate to the hodor/api/machinery directory. You need the following environment variables for this terminal:
-        - export PROJECT_ID=<PROJECTID>
-        - export PUBSUB_TOPICNAME=<PUBSUBTOPICNAME>
-        - export BUCKET_NAME=<BUCKETNAME>
-        - export GOOGLE_APPLICATION_CREDENTIALS=/path/to/creds.json
-      Then, run "go run machineryworker.go". This will start the workers to pick up tasks from the RabbitMQ broker. 
-    
-    * In another terminal, navigate to hodor/api directory and run "go run *.go". This will start all the components of the API server. 
-    
-    * In another terminal, navigate to hodor/api/googlesubscription directory. You need the following environment variables for this terminal:
-        - export PROJECT_ID=<PROJECTID>
-        - export SUBSCRIPTION_NAME=<SUBSCRIPTIONNAME>
-        - export DATASET_NAME=<DATASETNAME>
-        - export TABLE_NAME=<TABLENAME>
-        - export BUCKET_NAME=<BUCKETNAME>
-        - export GOOGLE_APPLICATION_CREDENTIALS=/path/to/creds.json
-      Then, run "go run googlesubscription.go". This will start the Subscription workers. 
-
-    * The infrastructue is up and running now. You can start sending API requests to the API server running locally on port 3636 such as "curl -H "Content-Type: application/json" -X POST -d '{"Toolname":"<TOOLNAME>","Targets":["<IP1>", "<IP2>"],"Options":"<OPTIONS>"}' http://localhost:3636/api/v1/runtool". Rest is similar as above. 
-
-
-### Building your own tools in this framework
-
-You can either contribute in building this framework or you can try integrating your own tool in this framework. 
-In order to build/integrate your own tool in this framework, you would have to write a Dockerfile for it and ensure that it can be run by simply running the Docker container such as `docker run <your-tool-name>` or something like that.
-Essentially, you would have to build a Docker image of your tool such that you can just send the API server a request specifying your toolname and your tool takes care of everything.
-If not, you can specify the target and options as well. Some code change would have to go in to ensure that the framework works with your tool as well.
-
-
-### Notes
-* The entire architecture will be orchestrated by Kubernetes so the number of pods can be increased/decreased depending upon the load by simply calling the Kubernetes API with no downtime. This can also be auto scaled with future versions of Kubernetes.
-* All the tools that will be run would be deployed as Docker images on the Google Container Registry.
-* Right now, the RabbitMQ message broker is only 1 POD. This can be improved by deploying a clustered RabbitMQ. 
-* Right now, the tools are started as single Docker containers in a POD. But, we can also start multiple Docker containers in a POD. This would depend upon what we see after doing some experimentation on what works and what doesn't.
-* The tool used for the message broker and worker is called machinery - https://github.com/RichardKnop/machinery
-* We should build our own Docker images and upload it to an internal registry instead of trusting public Docker images.
-* We need to implement some form of authentication to the API server.
-* Since we are only deploying a single node Kubernetes cluster using Minikube, I am mounting the host aka node path as the volume inside the Worker and Job Pods so that the scan files can be stored and retrieved from there. Once we start deploying clusters on GCE, we would have to replace the HostPath to something like GCE Persistent Disk.
-* Right now, there is logic for only running nmap. So, if you want to integrate more tools, there will be some changes that need to go in.
+* [Getting Started / Installation Tutorial](docs/getting-started.md)
+* [ToDo List](docs/todo-list.md)

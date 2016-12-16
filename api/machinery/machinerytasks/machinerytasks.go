@@ -71,7 +71,7 @@ func RunTool(toolname string, targets string, options string) (string, error) {
 
 	var buffer bytes.Buffer
 	var flocbuffer bytes.Buffer
-	if toolname == "tools_nmap" {
+	if toolname == "abhartiya/tools_nmap" {
 		buffer.WriteString("/results/nmap_")
 		buffer.WriteString(targets)
 		buffer.WriteString(".xml")
@@ -174,7 +174,7 @@ func RunTool(toolname string, targets string, options string) (string, error) {
 
 	defer func() {
 
-		if toolname == "tools_nmap" {
+		if toolname == "abhartiya/tools_nmap" {
 
 			fmt.Println("Ran NMAP and saved the XML file")
 			flocbuffer.WriteString(pwd)
@@ -240,8 +240,8 @@ func RunTool(toolname string, targets string, options string) (string, error) {
 
 		}
 
-		if toolname != "tools_nmap" {
-			fmt.Println("Ran a different tool. Need logic to send the result file from this tool")
+		if toolname != "abhartiya/tools_nmap" {
+			fmt.Println("Hodor only works with nmap tool for now. Please contact Anshuman Bhartiya to understand how to get other tools working with Hodor.")
 		}
 
 		// Delete Job that finished running
