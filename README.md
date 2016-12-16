@@ -1,5 +1,4 @@
 # hodor
- A testing framework that is Scaleable and Asynchronous built on Kubernetes
 
 ## Features
 
