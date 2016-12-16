@@ -6,12 +6,6 @@ This tutorial will walk you through the installation and setup of hodor (running
 
 * Install docker-machine, kubectl and minikube as mentioned in the pre-requisites in [README](../README.md)
 
-The versions I have tested this with are:
-    * docker-machine version 0.8.2, build e18a919
-    * kubectl Client Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.6", GitCommit:"e569a27d02001e343cb68086bc06d47804f62af6", GitTreeState:"clean", BuildDate:"2016-11-12T05:22:15Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"darwin/amd64"}
-    * kubectl Server Version: version.Info{Major:"1", Minor:"4", GitVersion:"v1.4.3", GitCommit:"4957b090e9a4f6a68b4a40375408fdc74a212260", GitTreeState:"clean", BuildDate:"1970-01-01T00:00:00Z", GoVersion:"go1.7.1", Compiler:"gc", Platform:"linux/amd64"}
-    * minikube version: v0.13.1
-
 * Git Clone this repository
 
 * Type `minikube start` to start a single node Kubernetes cluster on your local machine

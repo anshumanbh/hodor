@@ -3,9 +3,9 @@
 ## Features
 
 * Built on Kubernetes with microservices pre-built as Docker images - no need to worry about OS, environments, languages, etc. 
-* Cluster Management of Docker containers handled by Kubernetes - no need worry about scaling, load balancing, rolling updates, fault tolerance, etc. 
+* Cluster Management of Docker containers handled by Kubernetes - no need to worry about scaling, load balancing, rolling updates, fault tolerance, etc. 
 * RESTFUL API to request tools to run - anybody can request a tool to run by hitting an API endpoint
-* Asynchronous processing of jobs (running tools) - no need to wait for the results to come back. get a UUID on submitting a job and retrieve the status of the job later using that UUID. Uses [machinery](https://github.com/RichardKnop/machinery) and Google PubSub for achieving this in two different places. Aim is to consolidate and just use 1 (most probably Google PubSub in the future).
+* Asynchronous processing of jobs (running tools) - no need to wait for the results to come back. Get a UUID on submitting a job and retrieve the status of the job later using that UUID. Uses [machinery](https://github.com/RichardKnop/machinery) and Google PubSub for achieving this in two different places. Aim is to consolidate and just use 1 (most probably Google PubSub in the future).
 * Extensible - ability to add more tools in the framework
 * Aggregate output from multiple tools and ability to query them by leveraging Google Web Services such as Google Storage Cloud and Google BigQuery - make sense of the output from all the tools by doing analytics, machine learning, etc. 
 
