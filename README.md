@@ -55,3 +55,7 @@ Hodor uses the following public Docker images:
 
 * [Getting Started / Installation Tutorial](docs/getting-started.md)
 * [ToDo List](docs/todo-list.md)
+
+## Demo
+
+Please watch this demo - https://youtu.be/rVFWttFoy5s
